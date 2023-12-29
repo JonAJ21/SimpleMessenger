@@ -89,44 +89,44 @@ int main(void)
 
     AMQP::Connection connection(&handler, AMQP::Login("admin", "admin"), "/");
 
-    AMQP::Channel server_channel(&connection);
-    AMQP::Channel server_time_channel(&connection);
-    AMQP::Channel server_pq_channel(&connection);
-    server_channel.declareQueue("server");
-    server_time_channel.declareQueue("server_time");
-    server_pq_channel.declareQueue("server_pq");
-    AMQP::Channel client_log_channel(&connection);
-    AMQP::Channel client_channel(&connection);
+    AMQP::Channel channel(&connection);
+    // AMQP::Channel server_time_channel(&connection);
+    // AMQP::Channel server_pq_channel(&connection);
+    // server_channel.declareQueue("server");
+    channel.declareQueue("server_time");
+    channel.declareQueue("server_pq");
+    // AMQP::Channel client_log_channel(&connection);
+    // AMQP::Channel client_channel(&connection);
 
 
 
 
-    server_channel.consume("server", AMQP::noack).onReceived(
-            [&](const AMQP::Message &message,
-                       uint64_t deliveryTag,
-                       bool redelivered)
-        {  
-            if (message.bodySize() != 0) {
-                std::string received_message{message.body()};
-                received_message.resize(message.bodySize());
-                std::string user_login;
-                std::string friend_login;
-                std::string user_msg;
-                get_message_data(user_login, friend_login, user_msg, received_message);
-                std::cout <<" [x] Received: " << user_login << ' '<< friend_login << ' ' << user_msg << std::endl;
-                std::string user_log = user_login + "log";
-                client_log_channel.publish("", user_log.c_str(), "OK");
-                std::string message_to_friend = user_login + ": " + user_msg;
-                client_channel.publish("", friend_login.c_str(), message_to_friend.c_str());
-            }
-        }
-    );
+    // server_channel.consume("server", AMQP::noack).onReceived(
+    //         [&](const AMQP::Message &message,
+    //                    uint64_t deliveryTag,
+    //                    bool redelivered)
+    //     {  
+    //         if (message.bodySize() != 0) {
+    //             std::string received_message{message.body()};
+    //             received_message.resize(message.bodySize());
+    //             std::string user_login;
+    //             std::string friend_login;
+    //             std::string user_msg;
+    //             get_message_data(user_login, friend_login, user_msg, received_message);
+    //             std::cout <<" [x] Received: " << user_login << ' '<< friend_login << ' ' << user_msg << std::endl;
+    //             std::string user_log = user_login + "log";
+    //             client_log_channel.publish("", user_log.c_str(), "OK");
+    //             std::string message_to_friend = user_login + ": " + user_msg;
+    //             client_channel.publish("", friend_login.c_str(), message_to_friend.c_str());
+    //         }
+    //     }
+    // );
 
     
     
     std::priority_queue<MessengeTimer, std::vector<MessengeTimer>, Comp> pq;
 
-    server_time_channel.consume("server_time", AMQP::noack).onReceived(
+    channel.consume("server_time", AMQP::noack).onReceived(
             [&](const AMQP::Message &message,
                        uint64_t deliveryTag,
                        bool redelivered)
@@ -140,13 +140,13 @@ int main(void)
                 std::string user_msg;
                 get_message_data_with_timer(time, user_login, friend_login, user_msg, received_message);
                 std::cout <<" [x] Received: " << time << ' ' << user_login << ' '<< friend_login << ' ' << user_msg << std::endl;
-                std::string user_log = user_login + "log";
-                client_log_channel.publish("", user_log.c_str(), "OK");
+                // std::string user_log = user_login + "log";
+                // channel.publish("", user_log.c_str(), "OK");
                 auto start = std::chrono::high_resolution_clock::now();
                 auto end = std::chrono::high_resolution_clock::now();
                 MessengeTimer new_timer{start, end, stoi(time), user_login + " " + friend_login + " " + user_msg};
                 pq.push(new_timer);
-                server_pq_channel.publish("", "server_pq", "new item");
+                channel.publish("", "server_pq", "new item");
                 // std::this_thread::sleep_for(2000ms);
                 // std::cout << "Clock: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
                 // std::string message_to_friend = user_login + ": " + user_msg;
@@ -155,7 +155,7 @@ int main(void)
         }
     );
 
-    server_pq_channel.consume("server_pq", AMQP::noack).onReceived(
+    channel.consume("server_pq", AMQP::noack).onReceived(
             [&](const AMQP::Message &message,
                 uint64_t deliveryTag,
                 bool redelivered) 
@@ -191,19 +191,25 @@ int main(void)
                 pq = temp;
                 // std::cout << "TOP: " << pq.top().time << std::endl;
                 if (pq.top().time <= 0) {
-                    
-                    server_channel.publish("", "server", pq.top().messenge.c_str());
-                    std::cout << "Sent messenge with timer" << pq.top().messenge.c_str() << std::endl;
+                    // channel.publish("", )
+                    std::string user = "";
+                    std::string fr = "";
+                    std::string msg = "";
+                    get_message_data(user, fr, msg, pq.top().messenge.c_str());
+                    channel.publish("", fr.c_str(), msg.c_str());
+
+
+
+
+                    // server_channel.publish("", "server", pq.top().messenge.c_str());
+                    std::cout << "Sent messenge with timer " << pq.top().messenge.c_str() << std::endl;
                     pq.pop();
                 }
                 std::this_thread::sleep_for(100ms);
-                server_pq_channel.publish("", "server_pq", "cycle");
+                channel.publish("", "server_pq", "cycle");
             }
         }
     );
-
-
-
 
 
     std::cout << " [*] Waiting for messages. To exit press CTRL-C\n";

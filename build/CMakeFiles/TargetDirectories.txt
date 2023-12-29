@@ -1,0 +1,6 @@
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/amqp-cpp.dir
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/poco_simple_handler.dir
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/server.dir
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/client.dir
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/edit_cache.dir
+/home/jonaj/Desktop/StudyDir/SimpleMessenger/build/CMakeFiles/rebuild_cache.dir

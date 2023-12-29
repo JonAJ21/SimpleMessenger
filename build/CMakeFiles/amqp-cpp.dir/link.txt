@@ -1,0 +1,2 @@
+/usr/bin/ar qc libamqp-cpp.a "CMakeFiles/amqp-cpp.dir/amqp-cpp.cpp.o"
+/usr/bin/ranlib libamqp-cpp.a
